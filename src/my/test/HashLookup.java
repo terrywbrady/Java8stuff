@@ -12,8 +12,11 @@ public class HashLookup {
     public static void main(String[] args) {
         String s = args.length > 0 ? args[0] : "20.txt";
         try {
-            HashLookup hlook = new HashLookup(s);
-            hlook.findAll(s);
+            for(Sets m: Sets.values()) {
+                System.out.println(m.name());
+                HashLookup hlook = new HashLookup(m.getMySet(), s);
+                hlook.findAll(s);                
+            }
         } catch (FileNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -21,8 +24,8 @@ public class HashLookup {
     }
     
     private MySet set;
-    public HashLookup(String fname) throws FileNotFoundException {
-        set = getMySet();
+    public HashLookup(MySet set, String fname) throws FileNotFoundException {
+        this.set = set;
         try(Scanner s = new Scanner(new File(fname))) {
             while(s.hasNext()) {
                 String str = s.next();
@@ -45,12 +48,23 @@ public class HashLookup {
         System.out.println(timediff);
     }
     
-    public MySet getMySet() {
-        //return new MySetSet();
-        return new MyListSet();
-        //return new MyHashSet();
-    }
     
+    enum Sets {
+        List(new MyListSet()),
+        Set(new MySetSet()),
+        HashSet1(new MyHashSet(1)),
+        HashSet5(new MyHashSet(5)),
+        HashSet55(new MyHashSet(55)),
+        HashSet555(new MyHashSet(555)),
+        HashSet5555(new MyHashSet(5555)) ;
+        private MySet m;
+        Sets(MySet m) {
+            this.m = m;
+        }
+        public MySet getMySet() {return m;}
+        
+    }
+        
     static interface MySet {
         public void add(String s);
         public boolean find(String s);
@@ -78,7 +92,10 @@ public class HashLookup {
     
     static class MyHashSet implements MySet {
         int count = 0;
-        String[][] strs = new String[97][];
+        String[][] strs;
+        MyHashSet(int size) {
+            strs = new String[size][];            
+        }
         
         int getHash(String s) {
             return Math.abs(s.hashCode()) % strs.length;
