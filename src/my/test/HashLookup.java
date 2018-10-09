@@ -3,9 +3,13 @@ package my.test;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Scanner;
+import java.util.TreeSet;
 
 public class HashLookup {
 
@@ -13,9 +17,17 @@ public class HashLookup {
         String s = args.length > 0 ? args[0] : "20.txt";
         try {
             for(Sets m: Sets.values()) {
-                System.out.println(m.name());
-                HashLookup hlook = new HashLookup(m.getMySet(), s);
-                hlook.findAll(s);                
+                System.out.println("\n\n"+m.name());
+                MySet ms = m.getMySet();
+                HashLookup hlook = new HashLookup(ms, s);
+                long time = (new Date()).getTime();
+                if (ms.sort()) {
+                    long timediff = (new Date()).getTime() - time;
+                    System.out.println("Sort time: "+timediff);
+                    hlook.checkSorted(ms);
+                }
+                System.out.println(ms.getAll().size()+ " in get all");
+                //hlook.findAll(s);                
             }
         } catch (FileNotFoundException e) {
             // TODO Auto-generated catch block
@@ -23,11 +35,28 @@ public class HashLookup {
         }
     }
     
+    public boolean checkSorted(MySet ms) {
+        String lasts = "";
+        for(String ts: ms.getAll()) {
+            //System.out.println(ts);
+            if (ts.compareTo(lasts) < 0) {
+                System.out.println("*** Not sorted");
+                return false;
+            }
+            lasts = ts;
+        }
+        System.out.println("Sorted");
+        return true;
+    }
+    
     private MySet set;
     public HashLookup(MySet set, String fname) throws FileNotFoundException {
+        int MAX = 0;
+        int count = 0;
         this.set = set;
         try(Scanner s = new Scanner(new File(fname))) {
             while(s.hasNext()) {
+                if (count++ >= MAX && MAX > 0) break;
                 String str = s.next();
                 if (!set.find(str)) set.add(str);
             }
@@ -45,18 +74,23 @@ public class HashLookup {
             System.out.println(count + " found");
         }
         long timediff = (new Date()).getTime() - time;
-        System.out.println(timediff);
+        System.out.println("Find All time: "+timediff);
     }
     
     
     enum Sets {
-        List(new MyListSet()),
-        Set(new MySetSet()),
-        HashSet1(new MyHashSet(1)),
-        HashSet5(new MyHashSet(5)),
-        HashSet55(new MyHashSet(55)),
-        HashSet555(new MyHashSet(555)),
-        HashSet5555(new MyHashSet(5555)) ;
+        //Array(new MyArraySet()),
+        BubbleArray(new MyBubbleArraySet()),
+        QuickArray(new MyQuickArraySet()),
+        //List(new MyListSet()),
+        //Set(new MySetSet()),
+        //TreeSet(new MyTreeSetSet()),
+        //HashSet1(new MyHashSet(1)),
+        //HashSet5(new MyHashSet(5)),
+        //HashSet55(new MyHashSet(55)),
+        //HashSet555(new MyHashSet(555)),
+        //HashSet5555(new MyHashSet(5555)) 
+        ;
         private MySet m;
         Sets(MySet m) {
             this.m = m;
@@ -69,6 +103,8 @@ public class HashLookup {
         public void add(String s);
         public boolean find(String s);
         public int getSize();
+        public List<String> getAll();
+        public boolean sort();
     }
     
     static class MySetSet implements MySet {
@@ -87,6 +123,49 @@ public class HashLookup {
         @Override
         public int getSize() {
             return list.size();
+        }
+
+        @Override
+        public List<String> getAll() {
+            List<String>alist = new ArrayList<>();
+            alist.addAll(list);
+            return alist;
+        }
+
+        @Override
+        public boolean sort() {
+            return false;
+        }
+    }
+    
+    static class MyTreeSetSet implements MySet {
+        TreeSet<String> list = new TreeSet<>();
+
+        @Override
+        public void add(String s) {
+            list.add(s);
+        }
+
+        @Override
+        public boolean find(String s) {
+            return list.contains(s);
+        }
+
+        @Override
+        public int getSize() {
+            return list.size();
+        }
+
+        @Override
+        public List<String> getAll() {
+            List<String>alist = new ArrayList<>();
+            alist.addAll(list);
+            return alist;
+        }
+
+        @Override
+        public boolean sort() {
+            return true;
         }
     }
     
@@ -141,6 +220,24 @@ public class HashLookup {
         public int getSize() {
             return count;
         }
+
+        @Override
+        public List<String> getAll() {
+            List<String> alist = new ArrayList<>();
+            for(String[] slist: strs) {
+                if (slist == null) continue;
+                for (String s: slist) {
+                    if (s == null) break;
+                    alist.add(s);
+                }
+            }
+            return alist;
+        }
+
+        @Override
+        public boolean sort() {
+            return false;
+        }
         
     }
     
@@ -161,6 +258,96 @@ public class HashLookup {
         public int getSize() {
             return list.size();
         }
+
+        @Override
+        public List<String> getAll() {
+            return list;
+        }
+
+        @Override
+        public boolean sort() {
+            return false;
+        }
     }
- 
+
+    static class MyArraySet implements MySet {
+        int count = 0;
+        String[] list = new String[60_000];
+        
+        @Override
+        public void add(String s) {
+            if (count + 1 < list.length) {
+                list[count++] = s;
+            }
+        }
+
+        @Override
+        public boolean find(String s) {
+            for(int i=0; i < count; i++) {
+                if (list[i].equals(s)) { 
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        @Override
+        public int getSize() {
+            return count;
+        }
+
+        @Override
+        public List<String> getAll() {
+            return Arrays.asList(Arrays.copyOf(list, count));
+        }
+
+        @Override
+        public boolean sort() {
+            Arrays.sort(list,0,count);
+            return true;
+        }
+    }
+
+    /*Verify slow performance*/
+    static class MyBubbleArraySet extends MyArraySet {
+        @Override
+        public boolean sort() {
+            for(int i=0; i<count; i++) {
+                for(int j=i+1; j<count; j++) {
+                    if (list[i].compareTo(list[j]) > 0) {
+                        String t = list[i];
+                        list[i] = list[j];
+                        list[j] = t;
+                    }
+                }
+            }
+            return true;
+        }
+        
+    }
+
+    static class MyQuickArraySet extends MyArraySet {
+        @Override
+        public boolean sort() {
+            quickSort(0, count-1);
+            return true;
+        }
+        
+        void quickSort(int lo, int hi) {
+            if (lo >= hi) return;
+            String pivot = list[lo];
+            int pivotindex = lo;
+            for(int i=lo+1; i<= hi; i++) {
+                if (pivot.compareTo(list[i]) > 0) {
+                    list[pivotindex] = list[i];
+                    pivotindex++;
+                    list[i] = list[pivotindex];
+                    list[pivotindex] = pivot;
+                }
+            }
+            quickSort(lo, pivotindex-1);
+            quickSort(pivotindex+1,hi);
+        }
+    }
+
 }
