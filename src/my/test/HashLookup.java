@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 import java.util.TreeSet;
@@ -15,6 +14,7 @@ public class HashLookup {
 
     public static void main(String[] args) {
         String s = args.length > 0 ? args[0] : "20.txt";
+        //s = "schema.txt";
         try {
             for(Sets m: Sets.values()) {
                 System.out.println("\n\n"+m.name());
@@ -24,6 +24,12 @@ public class HashLookup {
                 if (ms.sort()) {
                     long timediff = (new Date()).getTime() - time;
                     System.out.println("Sort time: "+timediff);
+                    hlook.checkSorted(ms);
+                }
+                time = (new Date()).getTime();
+                if (ms.sort()) {
+                    long timediff = (new Date()).getTime() - time;
+                    System.out.println("Re-sort time: "+timediff);
                     hlook.checkSorted(ms);
                 }
                 System.out.println(ms.getAll().size()+ " in get all");
@@ -81,6 +87,7 @@ public class HashLookup {
     enum Sets {
         //Array(new MyArraySet()),
         BubbleArray(new MyBubbleArraySet()),
+        HeapArray(new MyHeapArraySet()),
         QuickArray(new MyQuickArraySet()),
         //List(new MyListSet()),
         //Set(new MySetSet()),
@@ -347,6 +354,53 @@ public class HashLookup {
             }
             quickSort(lo, pivotindex-1);
             quickSort(pivotindex+1,hi);
+        }
+    }
+
+    static class MyHeapArraySet extends MyArraySet {
+        @Override
+        public boolean sort() {
+            heapSort(0, count - 1);                
+            return true;
+        }
+        
+        void heapSort(int lo, int hi) {
+            makeHeap(lo, hi);
+            for(int i=hi; i> 0; i--) {
+                swap(lo, i);
+                siftDown(lo, i-1);
+            }
+        }
+        
+        void siftDown(int lo, int hi) {
+            int bigger = -1;
+            String cmp = list[lo];
+            for(int child=lo*2+1; child <= lo*2+2 && child <= hi; child++) {
+                if (cmp.compareTo(list[child]) < 0) {
+                    cmp = list[child];
+                    bigger = child;
+                } 
+            }
+            if (bigger > 0) {
+                swap(lo, bigger);
+                siftDown(bigger, hi);
+            }
+        }
+        
+        void makeHeap(int lo, int hi) {
+            for(int i=hi; i>=lo; i--) {
+                siftDown(i, hi);
+            }
+        }
+        
+        int getParentIndex(int i) {
+          return ((i + 1) / 2) - 1;  
+        }
+        
+        void swap(int a, int b) {
+            String temp = list[a];
+            list[a] = list[b];
+            list[b] = temp;
         }
     }
 
