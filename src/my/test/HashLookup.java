@@ -86,8 +86,9 @@ public class HashLookup {
     
     enum Sets {
         //Array(new MyArraySet()),
-        BubbleArray(new MyBubbleArraySet()),
+        //BubbleArray(new MyBubbleArraySet()),
         HeapArray(new MyHeapArraySet()),
+        MergeArray(new MyMergeArraySet()),
         QuickArray(new MyQuickArraySet()),
         //List(new MyListSet()),
         //Set(new MySetSet()),
@@ -280,10 +281,12 @@ public class HashLookup {
     static class MyArraySet implements MySet {
         int count = 0;
         String[] list = new String[60_000];
+        int max = list.length;
+        //int max = 20_000; //QuickSort stackoverflow on re-sort above this number
         
         @Override
         public void add(String s) {
-            if (count + 1 < list.length) {
+            if (count + 1 < max) {
                 list[count++] = s;
             }
         }
@@ -403,5 +406,38 @@ public class HashLookup {
             list[b] = temp;
         }
     }
+
+    static class MyMergeArraySet extends MyArraySet {
+        private String[] temp;
+        
+        @Override
+        public boolean sort() {
+            temp = new String[this.count];
+            mergeSort(0, count-1);
+            return true;
+        }
+        
+        void mergeSort(int lo, int hi) {
+            if (lo >= hi) return;
+            int mid = (lo+hi)/2;
+            mergeSort(lo, mid);
+            mergeSort(mid+1, hi);
+            int il = lo;
+            int ir = mid+1;
+            int i = lo;
+            while(il <= mid && ir <= hi) {
+                //System.err.println(String.format("%d %d %d %d %d", lo, hi, mid, il, ir));
+                if (list[il].compareTo(list[ir]) < 0) {
+                    temp[i++] = list[il++];
+                } else {
+                    temp[i++] = list[ir++];
+                }
+            }
+            if (il <= mid) System.arraycopy(list, il, temp, i, mid - il + 1);
+            if (ir <= hi) System.arraycopy(list, ir, temp, i, hi - ir + 1);
+            System.arraycopy(temp, lo, list, lo, hi - lo + 1);
+        }
+    }
+
 
 }
